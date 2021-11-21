@@ -1,11 +1,18 @@
 #include <iostream>
 #include <string>
+
 template<class K, class V> struct Node {
     K key;
     V value;
     Node<K, V> *left;
     Node<K, V> *right;
 };
+
+template<class K, class V>
+std::ostream& operator<<(std::ostream& os, const Node<K, V> &node) {
+    os << node.key << " : " << node.value;
+    return os;
+}
 
 template <class K, class V>
 class TreeMap {
@@ -14,24 +21,24 @@ public:
     TreeMap(const TreeMap<K, V> &parent);
     ~TreeMap();
     void clear_tree();
-    int size();
+    int size() const;
     void load(const std::string &filename);
-    void dump(const std::string &filename);
+    void dump(const std::string &filename) const;
     void add(const K &key, const V &value);
     void remove(const K &key);
-    void print_in_order();
-    bool contains(K key);
-    V& get(K key);
-    V& operator[](K key);
+    void print_in_order() const;
+    bool contains(const K &key) const;
+    V& get(const K &key) const;
+    V& operator[](const K &key) const;
 private:
     Node<K, V>* root;
     int tree_size;
     void add(Node<K, V> **new_node, const K &key, const V &value);
     Node<K, V>* remove(Node<K, V> *root, const K &key);
-    void print_in_order(Node<K, V> *node);
-    bool contains(Node<K, V> *node, K key);
+    void print_in_order(Node<K, V> *node) const;
+    bool contains(Node<K, V> *node, const K &key) const;
     void clear_tree(Node<K, V> *node);
-    V& search_node(Node<K, V> *node, K key);
+    V& search_node(Node<K, V> *node, const K &key) const;
     Node<K, V>* find_min(Node<K, V> *node);
 };
 
@@ -55,7 +62,7 @@ Node<K, V>* TreeMap<K, V>::find_min(Node<K, V> *node) {
 }
 
 template<class K, class V>
-int TreeMap<K, V>::size() {
+int TreeMap<K, V>::size() const {
     return this->tree_size;
 }
 
@@ -135,12 +142,12 @@ void TreeMap<K, V>::add(const K &key, const V &value) {
 }
 
 template<class K, class V>
-void TreeMap<K, V>::print_in_order() {
+void TreeMap<K, V>::print_in_order() const {
     print_in_order(this->root);
 }
 
 template<class K, class V>
-void TreeMap<K, V>::print_in_order(Node<K, V> *node) {
+void TreeMap<K, V>::print_in_order(Node<K, V> *node) const {
     if (node != nullptr) {
         print_in_order(node->left);
         std::cout << "Key: " << node->key << " " << "Value: " << node->value << std::endl;
@@ -158,7 +165,7 @@ void TreeMap<K, V>::clear_tree(Node<K, V> *node) {
 }
 
 template<class K, class V>
-bool TreeMap<K, V>::contains(Node<K, V> *node, K key) {
+bool TreeMap<K, V>::contains(Node<K, V> *node, const K &key) const {
     if (node == nullptr) {
         return false;
     }
@@ -172,12 +179,12 @@ bool TreeMap<K, V>::contains(Node<K, V> *node, K key) {
 }
 
 template<class K, class V>
-bool TreeMap<K, V>::contains(K key) {
+bool TreeMap<K, V>::contains(const K &key) const {
     return contains(this->root, key);
 }
 
 template<class K, class V>
-V &TreeMap<K, V>::search_node(Node<K, V> *node, K key) {
+V &TreeMap<K, V>::search_node(Node<K, V> *node, const K &key) const {
     if (node == nullptr) {
         throw std::exception();
     }
@@ -191,7 +198,7 @@ V &TreeMap<K, V>::search_node(Node<K, V> *node, K key) {
 }
 
 template<class K, class V>
-V& TreeMap<K, V>::get(K key) {
+V& TreeMap<K, V>::get(const K &key) const {
     if (this->contains(key)) {
         return search_node(this->root, key);
     }
@@ -199,7 +206,7 @@ V& TreeMap<K, V>::get(K key) {
 }
 
 template<class K, class V>
-V& TreeMap<K, V>::operator[](K key) {
+V& TreeMap<K, V>::operator[](const K &key) const {
     return this->get(key);
 }
 
@@ -216,6 +223,10 @@ int main() {
     map.remove(7);
     map[3] = 81;
     map.print_in_order();
+    Node<std::string, int> sample_node;
+    sample_node.key = "One";
+    sample_node.value = 1;
+    std::cout << sample_node << std::endl;
     std::cout << "Done" << std::endl;
     return 0;
 }
