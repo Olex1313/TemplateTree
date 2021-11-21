@@ -3,6 +3,7 @@
 #include <vector>
 #include <sstream>
 #include <fstream>
+#include <assert.h>
 
 template<class K, class V> struct Node {
     K key;
@@ -220,6 +221,8 @@ void TreeMap<K, V>::clear_tree(Node<K, V> *node) {
 template<class K, class V>
 void TreeMap<K, V>::clear_tree() {
     clear_tree(this->root);
+    this->root = nullptr;
+    this->tree_size = 0;
 }
 
 template<class K, class V>
@@ -260,7 +263,7 @@ V& TreeMap<K, V>::get(const K &key) const {
     if (this->contains(key)) {
         return search_node(this->root, key);
     }
-    throw "No such key in tree";
+    throw std::runtime_error("No such key in map");
 }
 
 template<class K, class V>
@@ -305,6 +308,9 @@ bool operator==(const TreeMap<K, V> &lhs, const TreeMap<K, V> &rhs) {
     if (lhs.size() != rhs.size()) {
         return false;
     }
+    if (lhs.size() == 0 && rhs.size() == 0) {
+        return true;
+    }
     std::vector<K> left_keys = lhs.get_keys();
     for (auto key : left_keys) {
         if (lhs[key] != rhs[key]) {
@@ -316,34 +322,60 @@ bool operator==(const TreeMap<K, V> &lhs, const TreeMap<K, V> &rhs) {
 
 int main() {
     TreeMap<int, int> map;
-    map.add(1, 1);
+   
+    // TEST 1, default constructor
+    assert(map.size() == 0);
+    map.add(1, 11);
+    std::cerr << "PASS 1 TEST" << std::endl;
+
+    // TEST 2, add method
+    assert(map.size() == 1);
+    std::cerr << "PASS 2 TEST" << std::endl;
+
+    // TEST 3, contans method
+    assert(map.contains(1));
+    std::cerr << "PASS 3 TEST" << std::endl;
+
+    // TEST 4, operator [] overload
+    assert(map[1] == 11);
+    std::cerr << "PASS 4 TEST" << std::endl;
+
+    // TEST 5, change value of specific key
     map.add(2, 4);
+    int previous_size = map.size();
+    map.remove(5);
+    assert(map.size() == previous_size);
+    map.remove(2);
+    assert(map.size() == previous_size - 1);
+    std::cerr << "PASS 5 TEST" << std::endl;
+
+    // TEST 6, remove method
+    assert(!map.contains(2));
+    std::cerr << "PASS 6 TEST" << std::endl;
+ 
+    // TEST 7, cleared == default
+    map.clear_tree();
+    TreeMap<int, int> default_tree;
+    assert(map == default_tree);
+    std::cerr << "PASS 7 TEST" << std::endl;
+   
+    // TEST 8, copy == parent
     map.add(5, 25);
     map.add(7, 49);
     map.add(3, 9);
-    map.print_in_order();
-    std::cout << map.get(1) << std::endl;
-    std::cout << map.get(7) << std::endl;
-    map.remove(7);
-    map[3] = 81;
-    map.print_in_order();
-    Node<std::string, int> sample_node;
-    sample_node.key = "One";
-    sample_node.value = 1;
-    std::cout << sample_node << std::endl;
-    std::vector<int> values = map.get_values();
-    for (auto value : values) {
-        std::cout << value << std::endl;
-    }
-    TreeMap<int, int> map2 = TreeMap(map);
-    map2.remove(1);
-    bool is_equals = map == map2;
-    map.dump("test.txt");
-    TreeMap<int, std::string> map3;
-    map3.load("test.txt");
-    map3.print_in_order();
-    std::cout << is_equals << std::endl;
-    std::cout << "Done" << std::endl;
+    TreeMap<int, int> copy = TreeMap(map);
+    assert(copy == map);
+    std::cerr << "PASS 8 TEST" << std::endl;
+
+    // TEST 9, file dumping
+    std::string test_file = "test.txt";
+    map.dump(test_file);
+    TreeMap<int, int> loaded_map;
+    loaded_map.load(test_file);
+    assert(loaded_map == map);
+    std::cerr << "PASS 9 TEST" << std::endl;
+
+    std::cout << "Passed all the tests" << std::endl;
     return 0;
 }
 
