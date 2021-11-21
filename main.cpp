@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sstream>
+#include <fstream>
 
 template<class K, class V> struct Node {
     K key;
@@ -32,6 +34,7 @@ public:
     V& get(const K &key) const;
     V& operator[](const K &key) const;
     std::vector<V> get_values() const;
+    std::vector<K> get_keys() const;
 private:
     Node<K, V>* root;
     int tree_size;
@@ -43,12 +46,59 @@ private:
     V& search_node(Node<K, V> *node, const K &key) const;
     Node<K, V>* find_min(Node<K, V> *node);
     void get_values(std::vector<V> &values, Node<K, V> *node) const;
+    void get_keys(std::vector<K> &keys, Node<K, V> *node) const;
 };
 
 template<class K, class V>
 TreeMap<K, V>::TreeMap() {
     this->root = nullptr;
     this->tree_size = 0;
+}
+
+template<class K, class V>
+TreeMap<K, V>::TreeMap(const TreeMap<K, V> &parent) {
+    std::vector<K> keys = parent.get_keys();
+    this->root = nullptr;
+    this->tree_size = 0;
+    for (auto key : keys) {
+        this->add(key, parent[key]);
+    }
+}
+
+template<class K, class V>
+void TreeMap<K, V>::load(const std::string &filename) {
+    clear_tree();
+    std::ifstream f(filename);
+    if (!f.is_open()) {
+        throw std::runtime_error("Couldn't open file");
+    }
+    for (std::string line; std::getline(f, line); ) {
+        K key;
+        V value;
+        std::string token;
+        std::stringstream ss (line);
+        std::getline(ss, token, ':');
+        std::stringstream converter (token);
+        converter >> key;
+        converter.clear();
+        std::getline(ss, token);
+        converter.str(token);
+        converter >> value;
+        add(key, value);
+    }
+}
+
+template<class K, class V>
+void TreeMap<K, V>::dump(const std::string &filename) const {
+    std::vector<K> keys = get_keys();
+    std::vector<V> values = get_values();
+    std::ofstream f(filename);
+    if (!f) {
+        throw std::runtime_error("Couldn't open file");
+    }
+    for (int i = 0; i < size(); ++i) {
+        f << keys[i] << ":" << values[i] << std::endl;
+    }
 }
 
 template<class K, class V>
@@ -168,6 +218,11 @@ void TreeMap<K, V>::clear_tree(Node<K, V> *node) {
 }
 
 template<class K, class V>
+void TreeMap<K, V>::clear_tree() {
+    clear_tree(this->root);
+}
+
+template<class K, class V>
 bool TreeMap<K, V>::contains(Node<K, V> *node, const K &key) const {
     if (node == nullptr) {
         return false;
@@ -229,6 +284,36 @@ std::vector<V> TreeMap<K, V>::get_values() const {
     return values;
 }
 
+template<class K, class V>
+void TreeMap<K, V>::get_keys(std::vector<K> &keys, Node<K, V> *node) const {
+    if (node != nullptr) {
+        get_keys(keys, node->left);
+        keys.push_back(node->key);
+        get_keys(keys, node->right);
+    }
+}
+
+template<class K, class V>
+std::vector<K> TreeMap<K, V>::get_keys() const {
+    std::vector<K> keys;
+    get_keys(keys, this->root);
+    return keys;
+}
+
+template<class K, class V>
+bool operator==(const TreeMap<K, V> &lhs, const TreeMap<K, V> &rhs) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+    std::vector<K> left_keys = lhs.get_keys();
+    for (auto key : left_keys) {
+        if (lhs[key] != rhs[key]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int main() {
     TreeMap<int, int> map;
     map.add(1, 1);
@@ -250,6 +335,14 @@ int main() {
     for (auto value : values) {
         std::cout << value << std::endl;
     }
+    TreeMap<int, int> map2 = TreeMap(map);
+    map2.remove(1);
+    bool is_equals = map == map2;
+    map.dump("test.txt");
+    TreeMap<int, std::string> map3;
+    map3.load("test.txt");
+    map3.print_in_order();
+    std::cout << is_equals << std::endl;
     std::cout << "Done" << std::endl;
     return 0;
 }
