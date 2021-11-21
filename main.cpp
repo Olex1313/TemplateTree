@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <vector>
 
 template<class K, class V> struct Node {
     K key;
@@ -30,6 +31,7 @@ public:
     bool contains(const K &key) const;
     V& get(const K &key) const;
     V& operator[](const K &key) const;
+    std::vector<V> get_values() const;
 private:
     Node<K, V>* root;
     int tree_size;
@@ -40,6 +42,7 @@ private:
     void clear_tree(Node<K, V> *node);
     V& search_node(Node<K, V> *node, const K &key) const;
     Node<K, V>* find_min(Node<K, V> *node);
+    void get_values(std::vector<V> &values, Node<K, V> *node) const;
 };
 
 template<class K, class V>
@@ -210,6 +213,22 @@ V& TreeMap<K, V>::operator[](const K &key) const {
     return this->get(key);
 }
 
+template<class K, class V>
+void TreeMap<K, V>::get_values(std::vector<V> &values, Node<K, V> *node) const {
+    if (node != nullptr) {
+        get_values(values, node->left);
+        values.push_back(node->value);
+        get_values(values, node->right);
+    }
+}
+
+template<class K, class V>
+std::vector<V> TreeMap<K, V>::get_values() const {
+    std::vector<V> values;
+    get_values(values, this->root);
+    return values;
+}
+
 int main() {
     TreeMap<int, int> map;
     map.add(1, 1);
@@ -227,6 +246,10 @@ int main() {
     sample_node.key = "One";
     sample_node.value = 1;
     std::cout << sample_node << std::endl;
+    std::vector<int> values = map.get_values();
+    for (auto value : values) {
+        std::cout << value << std::endl;
+    }
     std::cout << "Done" << std::endl;
     return 0;
 }
